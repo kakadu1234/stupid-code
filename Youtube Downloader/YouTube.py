@@ -4,13 +4,17 @@ import customtkinter as tk
 import os 
 import pyperclip
 import threading
+from pathlib import Path
 
-DestinationFolder = "C:/Users/" #your location
+#May have some bugs
+
+
+DestinationFolder = str(Path.home() / "Downloads")
 check = False
 url = ""
 global_progress = 0
 
-def Check_streams(link):
+'''def Check_streams(link):
     global itag_vid
     global itag_aud
     global title
@@ -27,7 +31,7 @@ def Check_streams(link):
         audio = audio.streams.filter( only_audio= True, mime_type= 'audio/mp4')
         print(audio)
         itag_aud = int(input("Itag audio, only number!: "))
-
+'''
 def Download_Video(link, itag_vid):
     yt = YouTube(link, on_progress_callback=progress_callback_video)
     yt = yt.streams.get_by_itag(itag_vid)
@@ -38,7 +42,7 @@ def Download_Video(link, itag_vid):
     new_name = "video.mp4"
     dateien = [f for f in os.listdir(DestinationFolder) if f.endswith(dateiVidEnd)]
     if dateien:
-       old_file = os.path.join(DestinationFolder,dateien[0]) 
+        old_file = os.path.join(DestinationFolder,dateien[0]) 
         new_file = os.path.join(DestinationFolder,new_name)
         os.rename(old_file, new_file)
     
@@ -47,7 +51,7 @@ def Download_Audio(link, itag_aud):
     tube = tube.streams.get_by_itag(itag_aud)
     print("Audio download started...")
     tube.download(output_path= DestinationFolder)
-    print("donwload completed")
+    print("Audio donwload completed")
     dateiAudEnd = '.m4a'
     newName = "audio.m4a"
     data = [f for f in os.listdir(DestinationFolder) if f.endswith(dateiAudEnd)]
@@ -77,28 +81,37 @@ def update_progressbar(percent):
     app.update_idletasks()
 
 def callback(progress):
-    app.after(0, update_progress, progress) 
+    app.after(0, update_progressbar, progress) 
 
 def concatenate_func():
+    video_path = os.path.join(DestinationFolder, "video.mp4")
+    audio_path = os.path.join(DestinationFolder, "audio.m4a")
+    final_path = os.path.join(DestinationFolder, "final.mp4")
+
+    if not os.path.isfile(video_path):
+        raise FileNotFoundError(f"Video file not found: {video_path}")
+    if not os.path.isfile(audio_path):
+        raise FileNotFoundError(f"Audio file not found: {audio_path}")
+
     # Open the video and audio
-    video_clip = VideoFileClip('output/video.mp4')
-    audio_clip = AudioFileClip('output/audio.m4a')
+    video_clip = VideoFileClip(video_path)
+    audio_clip = AudioFileClip(audio_path)
   
     # Concatenate the video clip with the audio clip
     final_video = video_clip.with_audio(audio_clip)
     
     # Export the final video with audio
-    final_video.write_videofile("output/final.mp4",
+    final_video.write_videofile(final_path,
      codec="libx264", audio_codec="aac", preset= 'ultrafast', threads= 4)
     
     video_clip.close()
     audio_clip.close()
     final_video.close()
         #delete audio and video files
-    if os.path.exists('output/video.mp4'):
-        os.remove('output/video.mp4')
-    if os.path.exists('output/audio.m4a'):
-        os.remove('output/audio.m4a')
+    if os.path.exists(video_path):
+        os.remove(video_path)
+    if os.path.exists(audio_path):
+        os.remove(audio_path)
     update_progressbar(100)
 
 def Paste():
@@ -161,14 +174,14 @@ def resolution():
         itag_vid = 394
         itag_aud = 140
     else:
-        Print('Resolution unavailable!!')
+        print('Resolution unavailable!!')
 
 def instruction():
     resolution()
     if checkbox_Video() == True:
         threading.Thread(target=Download_Video, args=(url, itag_vid), daemon= True).start()
     if checkbox_Audio() == True:
-        threading.Thread(target=Download_Audio, args=(url, itag_vid), daemon=True).start()
+        threading.Thread(target=Download_Audio, args=(url, itag_aud), daemon=True).start()
     if checkbox_Full() == True:
         video_thread = threading.Thread(target=Download_Video, args=(url, itag_vid), daemon=True)
         audio_thread = threading.Thread(target=Download_Audio, args=(url, itag_aud), daemon=True)
