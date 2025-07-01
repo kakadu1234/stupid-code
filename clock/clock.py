@@ -2,8 +2,14 @@ import customtkinter
 import tkinter
 import time
 import math
+import winsound
 
 #Background Process -------------------------------------------->
+
+def playAudio():
+    filename = "RingTone.wav"
+    winsound.PlaySound(filename, winsound.SND_FILENAME | winsound.SND_ASYNC)
+
 
 def convertToSeconds(hour=0, minute=0, second=0):
     second1 = hour * 60 * 60
@@ -20,7 +26,9 @@ def runTimer(lenght, start_time=None):
     ProgressBar.set(min(progressed, 1))
 
     if elapsed >= lenght:
+        playAudio()
         Counter.configure(text="Ding Dong!")
+        
     else: #update Label
         remaining = max(0, math.ceil(lenght - elapsed))
         hrs = remaining //  3600
